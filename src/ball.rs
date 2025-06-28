@@ -40,7 +40,7 @@ impl Ball {
     pub fn reset(&mut self) {
         self.rect.x = screen_width() * 0.5;
         self.rect.y = screen_height() * 0.5;
-        self.vel = vec2(rand::gen_range(-1., 1.), 1.).normalize();
+        self.vel = vec2(rand::gen_range(-1., 1.), rand::gen_range(-1., 1.)).normalize();
     }
     pub fn sprite(&self) {
         draw_circle(self.rect.x, self.rect.y, BALL_SIZE.y / 2., RED);

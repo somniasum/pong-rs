@@ -1,5 +1,4 @@
-use macroquad::{prelude::*, audio::{Sound, play_sound_once}};
-
+use macroquad::prelude::*;
 use crate::collision::*;
 
 pub struct Info {

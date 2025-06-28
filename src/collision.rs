@@ -15,22 +15,32 @@ impl Collision {
     }
 
     pub fn score_update(&mut self, ball: &mut Ball) {
-        if ball.rect.x < 0. {
-            play_sound_once(&self.score_sound);
-            ball.speed += 10.;
+
+
+        if ball.rect.x + ball.rect.w < 0. {
             ball.reset();
+            ball.speed += 20.;
             self.comp_score += 1;
-        }else if ball.rect.x > screen_width() - ball.rect.w {
-            self.player_score += 1;
+            play_sound_once(&self.score_sound);
+        }else if ball.rect.x > screen_width()  {
             ball.reset();
-            ball.speed += 10.;
+            ball.speed += 20.;
+            self.player_score += 1;
             play_sound_once(&self.score_sound);
         }
     }
 
     pub fn physics(&self, ball: &mut Ball, obj: &Rect) -> bool {
-        if ball.rect.overlaps(obj) {
-            ball.vel.x *= -1.;
+        let towards = if obj.x > screen_width() / 2. { 1. } else { -1. };
+        if ball.rect.overlaps(obj) && ball.vel.x.signum() == towards {
+            if ball.vel.x > 0. {
+                ball.rect.x = obj.x - ball.rect.w;
+
+            }else {
+                ball.rect.x = obj.x + obj.w;
+
+            }
+            ball.vel.x = -ball.vel.x;
 
             let obj_center = obj.y + obj.h / 2.;
             let ball_center = ball.rect.y + ball.rect.h / 2.;
@@ -38,18 +48,15 @@ impl Collision {
             ball.vel.y = offset;
 
             ball.vel = ball.vel.normalize();
+
+            play_sound_once(&self.hit_sound);
             true
-        } else {
+
+        }else {
             false
         }
+
     }
 
-    pub fn audio(&self, ball: &mut Ball, obj: &Rect) {
-        if Collision::physics(&self, ball, obj) {
-            if true {
-                play_sound_once(&self.hit_sound);
-                Collision::physics(&self, ball, obj);
-            }
-        }
-    }
+
 }
