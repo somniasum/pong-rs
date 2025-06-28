@@ -1,1 +1,1 @@
-[![Watch the video](prototype.png)](examples/prototype.mp4)
+[![Demo](prototype.png)](examples/prototype.gif)
