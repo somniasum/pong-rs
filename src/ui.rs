@@ -1,15 +1,16 @@
-use macroquad::prelude::*;
+use macroquad::{prelude::*, audio::{Sound, play_sound_once}};
 
 use crate::collision::*;
 
-pub struct Info {}
+pub struct Info {
+}
 
 impl Info {
     pub fn new() -> Self {
         Self {}
     }
-
     pub fn draw_score(&mut self, collision: &mut Collision) {
+
         let score_text_comp = format!("COMP score: {}", collision.comp_score);
         let score_text_player =  format!("P1 score: {}", collision.player_score);
         draw_text_ex(

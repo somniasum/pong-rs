@@ -5,21 +5,26 @@ use macroquad::prelude::*;
 pub struct Collision {
     pub player_score: u32,
     pub comp_score: u32,
-    pub sound: Sound,
+    pub hit_sound: Sound,
+    pub score_sound: Sound,
 }
 
 impl Collision {
-    pub fn new(sound: Sound) -> Self {
-        Self { player_score: 0, comp_score: 0, sound }
+    pub fn new(hit_sound: Sound, score_sound: Sound) -> Self {
+        Self { player_score: 0, comp_score: 0, hit_sound, score_sound }
     }
 
     pub fn score_update(&mut self, ball: &mut Ball) {
         if ball.rect.x < 0. {
-            self.comp_score += 1;
+            play_sound_once(&self.score_sound);
+            ball.speed += 10.;
             ball.reset();
+            self.comp_score += 1;
         }else if ball.rect.x > screen_width() - ball.rect.w {
             self.player_score += 1;
             ball.reset();
+            ball.speed += 10.;
+            play_sound_once(&self.score_sound);
         }
     }
 
@@ -33,7 +38,6 @@ impl Collision {
             ball.vel.y = offset;
 
             ball.vel = ball.vel.normalize();
-
             true
         } else {
             false
@@ -43,7 +47,7 @@ impl Collision {
     pub fn audio(&self, ball: &mut Ball, obj: &Rect) {
         if Collision::physics(&self, ball, obj) {
             if true {
-                play_sound_once(&self.sound);
+                play_sound_once(&self.hit_sound);
                 Collision::physics(&self, ball, obj);
             }
         }
