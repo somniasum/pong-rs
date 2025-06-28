@@ -1,0 +1,227 @@
+//use macroquad::audio::{PlaySoundParams, load_sound, play_sound};
+use macroquad::prelude::*;
+const PLAYER_SIZE: Vec2 = vec2(40., 150.);
+const PLAYER_SPEED: f32 = 300.;
+const BALL_SIZE: Vec2 = vec2(40., 40.);
+const BALL_SPEED: f32 = 300.;
+
+pub struct Info {
+    score: u32,
+    rect: Rect,
+    font: Font,
+}
+
+impl Info {
+    pub fn new(font: Font, pos: Vec2) -> Self {
+        Self {
+            rect: Rect::new(pos.x, pos.y, BALL_SIZE.x, BALL_SIZE.y),
+            score: 0,
+            font,
+        }
+    }
+
+    pub fn draw_score(&mut self) {
+        let score_text = format!("score: {}", self.score);
+        draw_text_ex(
+            &score_text,
+            screen_width() * 0.5 - 50. * 0.5,
+            40.,
+            TextParams {
+                font_size: 30,
+                font: Some(&self.font),
+                color: WHITE,
+                ..Default::default()
+            },
+        );
+        draw_text(
+            "PONG",
+            screen_width() / 2. - 10.,
+            screen_height() - 50.,
+            30.0,
+            WHITE,
+        );
+    }
+    pub fn score_update(&mut self, ball: &mut Ball) {
+        if ball.rect.x < 0. || ball.rect.x > screen_width() - ball.rect.w {
+            self.score += 1;
+
+            //reset ball velocity
+            ball.rect.x = screen_width() * 0.5;
+            ball.rect.y = screen_height() * 0.5;
+            ball.vel = vec2(rand::gen_range(-1., 1.), 1.).normalize();
+        }
+    }
+}
+
+pub struct Ball {
+    rect: Rect,
+    vel: Vec2,
+}
+
+impl Ball {
+    pub fn new(pos: Vec2) -> Self {
+        Self {
+            rect: Rect::new(pos.x, pos.y, BALL_SIZE.x, BALL_SIZE.y),
+
+            vel: vec2(rand::gen_range(-1., 1.), 1.).normalize(),
+        }
+    }
+
+    pub fn ball_movement(&mut self, dt: f32) {
+        self.rect.y += self.vel.y * dt * BALL_SPEED;
+        self.rect.x += self.vel.x * dt * BALL_SPEED;
+        if self.rect.y < 0. {
+            self.vel.y = 1.;
+        }
+        if self.rect.y > screen_height() - self.rect.h {
+            self.vel.y = -1.;
+        }
+    }
+
+    pub fn sprite(&self) {
+        draw_circle(self.rect.x, self.rect.y, BALL_SIZE.y / 2., LIGHTGRAY);
+    }
+}
+
+pub struct Computer {
+    rect: Rect,
+    vel: Vec2,
+}
+
+impl Computer {
+    pub fn new() -> Self {
+        Self {
+            rect: Rect::new(
+                screen_width() - PLAYER_SIZE.x,
+                100.0,
+                PLAYER_SIZE.x,
+                PLAYER_SIZE.y,
+            ),
+
+            vel: vec2(rand::gen_range(-1., 1.), 1.).normalize(),
+        }
+    }
+    pub fn computer_movement(&mut self, dt: f32) {
+        self.rect.y += self.vel.y * dt * PLAYER_SPEED;
+
+        if self.rect.y < 0. {
+            self.vel.y = 1.;
+        }
+
+        if self.rect.y > screen_height() - self.rect.h {
+            self.vel.y = -1.;
+        }
+    }
+    pub fn sprite(&self) {
+        draw_rectangle(
+            self.rect.x,
+            self.rect.y,
+            self.rect.w,
+            self.rect.h,
+            LIGHTGRAY,
+        );
+    }
+}
+
+// Player Info
+pub struct Player {
+    rect: Rect,
+}
+
+impl Player {
+    pub fn new() -> Self {
+        Self {
+            rect: Rect::new(
+                screen_width() - PLAYER_SIZE.x * 20.,
+                100.0,
+                PLAYER_SIZE.x,
+                PLAYER_SIZE.y,
+            ),
+        }
+    }
+
+    pub fn player_movement(&mut self, dt: f32) {
+        let move_y = match (is_key_down(KeyCode::S), is_key_down(KeyCode::W)) {
+            (false, true) => -1.,
+            (true, false) => 1.,
+            _ => 0.,
+        };
+        self.rect.y += move_y * dt * PLAYER_SPEED;
+
+        if self.rect.y < 0. {
+            self.rect.y = 0.;
+        }
+
+        if self.rect.y > screen_height() - self.rect.h {
+            self.rect.y = screen_height() - self.rect.h;
+        }
+    }
+
+    pub fn sprite(&self) {
+        draw_rectangle(self.rect.x, self.rect.y, self.rect.w, self.rect.h, GRAY);
+    }
+}
+
+//Collision logic
+fn collision(a: &mut Rect, vel: &mut Vec2, b: &Rect) -> bool {
+    let intersection = match a.intersect(*b) {
+        Some(intersection) => intersection,
+        None => return false,
+    };
+    let a_center = a.center();
+    let b_center = b.center();
+
+    let to = b_center - a_center;
+    let to_signum = to.signum();
+
+    match intersection.w > intersection.h {
+        true => {
+            a.y -= to_signum.y * intersection.h;
+            vel.y = -to_signum.y * vel.x.abs();
+        }
+
+        false => {
+            a.x -= to_signum.x * intersection.w;
+            vel.x = -to_signum.x * vel.x.abs();
+        }
+    }
+
+    true
+}
+
+// Main Game loop
+#[macroquad::main("PONG")]
+async fn main() {
+    let font = load_ttf_font("./res/silk.ttf").await.unwrap();
+
+    let position = vec2(screen_width() * 0.5, screen_height() * 0.5);
+    let mut ball = Ball::new(position);
+    let mut player = Player::new();
+    let mut computer = Computer::new();
+
+    let mut info = Info::new(font, position);
+    //let sound = load_sound("./res/underclocked.wav").await.unwrap();
+
+    loop {
+        clear_background(BLACK);
+        /*play_sound(
+            &sound,
+            PlaySoundParams {
+                looped: false,
+                volume: 0.5,
+            },
+        );*/
+        collision(&mut ball.rect, &mut ball.vel, &mut player.rect);
+        collision(&mut ball.rect, &mut ball.vel, &mut computer.rect);
+
+        info.draw_score();
+        info.score_update(&mut ball);
+        ball.ball_movement(get_frame_time());
+        ball.sprite();
+        computer.computer_movement(get_frame_time());
+        computer.sprite();
+        player.sprite();
+        player.player_movement(get_frame_time());
+        next_frame().await
+    }
+}

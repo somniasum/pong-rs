@@ -1,0 +1,51 @@
+use macroquad::prelude::*;
+
+const COMP_SIZE: Vec2 = vec2(40., 150.);
+const COMP_SPEED: f32 = 300.;
+
+pub struct Computer {
+    pub rect: Rect,
+    pub vel: Vec2,
+    x_off: f32,
+}
+
+impl Computer {
+    pub fn new() -> Self {
+        Self {
+            rect: Rect::new(
+                screen_width() - COMP_SIZE.x - 22.,
+                100.0,
+                COMP_SIZE.x,
+                COMP_SIZE.y,
+            ),
+            x_off: 20.,
+
+            vel: vec2(rand::gen_range(-1., 1.), 1.).normalize(),
+        }
+    }
+    pub fn computer_movement(&mut self, dt: f32) {
+        self.rect.y += self.vel.y * dt * COMP_SPEED;
+
+        if self.rect.y < 0. {
+            self.vel.y = 1.;
+        }
+
+        if self.rect.y > screen_height() - self.rect.h {
+            self.vel.y = -1.;
+        }
+    }
+
+    pub fn update_pos(&mut self) {
+        self.rect.x = screen_width() - COMP_SIZE.x - self.x_off;
+    }
+
+    pub fn sprite(&self) {
+        draw_rectangle(
+            self.rect.x,
+            self.rect.y,
+            self.rect.w,
+            self.rect.h,
+            LIGHTGRAY,
+        );
+    }
+}
