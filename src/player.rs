@@ -1,12 +1,12 @@
 use macroquad::prelude::*;
 
 pub const PLAYER_SIZE: Vec2 = vec2(40., 150.);
-pub const PLAYER_SPEED: f32 = 500.;
 
 // Player Info
 pub struct Player {
     pub rect: Rect,
     pub x_off: f32,
+    pub speed: f32,
 }
 
 impl Player {
@@ -18,6 +18,7 @@ impl Player {
                 PLAYER_SIZE.x,
                 PLAYER_SIZE.y,
             ),
+            speed: 500.,
             x_off: 20.,
         }
     }
@@ -28,7 +29,7 @@ impl Player {
             (true, false) => 1.,
             _ => 0.,
         };
-        self.rect.y += move_y * dt * PLAYER_SPEED;
+        self.rect.y += move_y * dt * self.speed;
 
         if self.rect.y < 0. {
             self.rect.y = 0.;

@@ -1,4 +1,4 @@
-use macroquad::{prelude::*, audio::{Sound,  load_sound_from_bytes}, texture::*};
+use macroquad::{prelude::*, audio::{Sound,  load_sound_from_bytes}};
 mod ball;
 mod collision;
 mod computer;
@@ -38,7 +38,7 @@ async fn main() {
         // collision calls
         collision.physics(&mut ball, &player.rect);
         collision.physics(&mut ball, &computer.rect);
-        collision.score_update(&mut ball);
+        collision.score_update(&mut ball, &mut player, &mut computer);
 
         // UI calls
         ui.draw_score(&mut collision);
