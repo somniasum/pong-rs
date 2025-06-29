@@ -1,10 +1,10 @@
-use macroquad::audio::{Sound, load_sound};
-use macroquad::prelude::*;
+use macroquad::{prelude::*, audio::{Sound,  load_sound_from_bytes}, texture::*};
 mod ball;
 mod collision;
 mod computer;
 mod player;
 mod ui;
+
 
 use ball::*;
 use collision::*;
@@ -16,8 +16,13 @@ use ui::*;
 #[macroquad::main("PONG")]
 async fn main() {
     //audio
-    let hit_sound: Sound = load_sound("hit.wav").await.unwrap();
-    let score_sound: Sound = load_sound("score.wav").await.unwrap();
+    let hit_sound_bytes = include_bytes!("hit.wav");
+    let score_sound_bytes = include_bytes!("score.wav");
+
+
+
+    let hit_sound: Sound = load_sound_from_bytes(hit_sound_bytes).await.unwrap();
+    let score_sound: Sound = load_sound_from_bytes(score_sound_bytes).await.unwrap();
 
     // objects
     let position = vec2(screen_width() * 0.5, screen_height() * 0.5);

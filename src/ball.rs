@@ -12,7 +12,7 @@ impl Ball {
         Self {
             rect: Rect::new(pos.x, pos.y, BALL_SIZE.x, BALL_SIZE.y),
 
-            speed: 400.,
+            speed: 600.,
             vel: vec2(rand::gen_range(-100., 100.), rand::gen_range(-20., -13.)).normalize(),
         }
     }

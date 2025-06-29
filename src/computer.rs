@@ -12,6 +12,7 @@ pub struct Computer {
 
 impl Computer {
     pub fn new() -> Self {
+
         Self {
             rect: Rect::new(
                 screen_width() - COMP_SIZE.x - 22.,
@@ -77,12 +78,13 @@ impl Computer {
     }
 
     pub fn sprite(&self) {
-        draw_rectangle(
-            self.rect.x,
-            self.rect.y,
-            self.rect.w,
-            self.rect.h,
-            LIGHTGRAY,
-        );
+
+       draw_rectangle(
+           self.rect.x,
+       self.rect.y,
+       self.rect.w,
+       self.rect.h,
+       LIGHTGRAY,
+       )
     }
 }
