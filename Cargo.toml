@@ -8,6 +8,11 @@ audio = "0.2.0"
 quad-snd = "0.2.8"
 macroquad = { version = "0.4", features = ["audio"], default-features = false }
 
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+
 [target.x86_64-pc-windows-gnu]
 linker = "x86_64-w64-mingw32-gcc"
 rustflags = ["-C", "target-feature=+crt-static"]
