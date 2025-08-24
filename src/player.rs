@@ -24,7 +24,7 @@ impl Player {
     }
 
     pub fn player_movement(&mut self, dt: f32) {
-        let move_y = match (is_key_down(KeyCode::S), is_key_down(KeyCode::W)) {
+        let move_y = match (is_key_down(KeyCode::S) || is_key_down(KeyCode::Down), is_key_down(KeyCode::W) || is_key_down(KeyCode::Up)) {
             (false, true) => -1.,
             (true, false) => 1.,
             _ => 0.,
