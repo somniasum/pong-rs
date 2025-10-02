@@ -1,5 +1,5 @@
 use macroquad::{
-    audio::{Sound, load_sound_from_bytes},
+    audio::{Sound, load_sound_from_bytes, play_sound, play_sound_once},
     prelude::*,
 };
 mod ball;
@@ -12,6 +12,7 @@ use ball::*;
 use collision::*;
 use computer::*;
 use player::*;
+use quad_snd::PlaySoundParams;
 use ui::*;
 
 pub fn draw_text(text: &str) {
@@ -29,6 +30,7 @@ pub fn draw_text(text: &str) {
 pub enum GameState {
     Menu,
     Playing,
+    GameWin,
     GameOver,
 }
 
@@ -38,9 +40,11 @@ async fn main() {
     //audio
     let hit_sound_bytes = include_bytes!("hit.wav");
     let score_sound_bytes = include_bytes!("score.wav");
+    let background_sound_bytes = include_bytes!("background_music.wav");
 
     let hit_sound: Sound = load_sound_from_bytes(hit_sound_bytes).await.unwrap();
     let score_sound: Sound = load_sound_from_bytes(score_sound_bytes).await.unwrap();
+    let background_sound: Sound = load_sound_from_bytes(background_sound_bytes).await.unwrap();
 
     // objects
     let position = vec2(screen_width() * 0.5, screen_height() * 0.5);
@@ -51,34 +55,37 @@ async fn main() {
     let mut ui = Info::new();
     //gamestate
     let mut game_state = GameState::Menu;
+    //music
+    let mut music = false;
 
     loop {
         match game_state {
             GameState::Menu => {
                 // Menu logic
-                //
+                if !music {
+                    play_sound(
+                        &background_sound,
+                        PlaySoundParams {
+                            volume: 0.5,
+                            looped: false,
+                        },
+                    );
+                    music = true;
+                }
                 draw_text("Press [ Space ] to start");
                 if is_key_down(KeyCode::Space) {
                     game_state = GameState::Playing;
+                    music = false;
                 }
             }
             GameState::Playing => {
                 // Playing logic
                 clear_background(BLACK);
+                music = false;
                 // collision calls
                 collision.physics(&mut ball, &player.rect);
                 collision.physics(&mut ball, &computer.rect);
                 collision.score_update(&mut ball, &mut player, &mut computer);
-                if collision.player_score == 5 {
-                    draw_text("You win!");
-                    game_state = GameState::Menu;
-                    collision.comp_score = 0;
-                    collision.player_score = 0;
-                } else if collision.comp_score == 5 {
-                    game_state = GameState::GameOver;
-                    collision.comp_score = 0;
-                    collision.player_score = 0;
-                }
 
                 // UI calls
                 ui.draw_score(&mut collision);
@@ -96,6 +103,21 @@ async fn main() {
                 player.update_pos();
                 player.sprite();
                 player.player_movement(get_frame_time());
+                if collision.player_score == 5 {
+                    collision.reset(&mut ball, &mut player, &mut computer);
+                    game_state = GameState::GameWin;
+                } else if collision.comp_score == 5 {
+                    collision.reset(&mut ball, &mut player, &mut computer);
+                    game_state = GameState::GameOver;
+                }
+            }
+            GameState::GameWin => {
+                // Game Win logic
+                draw_text("You Win \n Press [ Space ] to restart.");
+
+                if is_key_down(KeyCode::Space) {
+                    game_state = GameState::Playing;
+                }
             }
             GameState::GameOver => {
                 // Game Over logic
