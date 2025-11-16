@@ -8,11 +8,12 @@ pub struct Computer {
     pub max_speed: f32,
     pub reaction: f32,
     x_off: f32,
+    pub vel_y: f32,
+    prev_y: f32,
 }
 
 impl Computer {
     pub fn new() -> Self {
-
         Self {
             rect: Rect::new(
                 screen_width() - COMP_SIZE.x - 22.,
@@ -23,54 +24,68 @@ impl Computer {
             max_speed: 250.,
             reaction: 200.,
             x_off: 20.,
-
+            vel_y: 0.,
+            prev_y: 100.0,
         }
     }
-    pub fn computer_movement(&mut self,ball: &Ball, dt: f32) {
 
-        // x-axis calc
-        let ball_center = ball.rect.y + ball.rect.h * 0.5 ;
-        let comp_x = self.rect.x ;
+    pub fn computer_movement(&mut self, ball: &Ball, dt: f32) {
+        self.prev_y = self.rect.y;
+
+        // x-axis
+        let ball_center = ball.rect.y + ball.rect.h * 0.5;
+        let comp_x = self.rect.x;
         let dx = comp_x - (ball.rect.x + ball.rect.w / 2.);
 
-        // if ball is away calc the y
+        // y-axis
         let target_y = if ball.vel.x.signum() * dx > 0. {
             ball_center
-        }else {
-
-            // t = distance / horizontal speed
+        } else {
             let t = dx.abs() / ball.vel.x.abs().max(1.);
             let mut future_y = ball_center + ball.vel.y * t;
 
-
-            // bounce prediction
-            let screen_h = screen_height() - ball.rect.h ;
-            //invert direction
+            let screen_h = screen_height() - ball.rect.h;
             if future_y < 0. || future_y > screen_h {
                 let overflow = if future_y < 0. {
                     -future_y
-                }else {
+                } else {
                     future_y - screen_h
                 };
-                future_y = if future_y < 0.{
+                future_y = if future_y < 0. {
                     overflow
-                }else {
+                } else {
                     screen_h - overflow
                 };
             }
             future_y
         };
 
-            // calc frame distance
-            let comp_center = self.rect.y + self.rect.h / 2.;
-            let delta = (target_y - comp_center) * self.reaction;
+        // calculate frame distance
+        let comp_center = self.rect.y + self.rect.h / 2.;
+        let delta = (target_y - comp_center) * self.reaction;
 
-            //clamp max speed
-            let move_amount = delta.clamp(-self.max_speed, self.max_speed) * dt;
-            self.rect.y += move_amount;
+        //clamp max speed
+        let move_amount = delta.clamp(-self.max_speed, self.max_speed) * dt;
+        self.rect.y += move_amount;
 
-            // bound to screen
-            self.rect.y = self.rect.y.clamp(0., screen_height() - self.rect.h);
+        // bound to screen
+        self.rect.y = self.rect.y.clamp(0., screen_height() - self.rect.h);
+
+        if dt > 0. {
+            let calculated_vel = (self.rect.y - self.prev_y) / dt;
+
+            const VELOCITY_DEADZONE: f32 = 50.0;
+
+            const MAX_VEL_INFLUENCE: f32 = 300.0;
+
+            self.vel_y = if calculated_vel.abs() > VELOCITY_DEADZONE {
+                calculated_vel.clamp(-MAX_VEL_INFLUENCE, MAX_VEL_INFLUENCE)
+            } else {
+                0.
+            };
+        } else {
+            self.vel_y = 0.;
+        }
     }
 
     pub fn update_pos(&mut self) {
@@ -78,13 +93,12 @@ impl Computer {
     }
 
     pub fn sprite(&self) {
-
-       draw_rectangle(
-           self.rect.x,
-       self.rect.y,
-       self.rect.w,
-       self.rect.h,
-       LIGHTGRAY,
-       )
+        draw_rectangle(
+            self.rect.x,
+            self.rect.y,
+            self.rect.w,
+            self.rect.h,
+            LIGHTGRAY,
+        )
     }
 }

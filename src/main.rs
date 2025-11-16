@@ -1,5 +1,5 @@
 use macroquad::{
-    audio::{Sound, load_sound_from_bytes, play_sound, play_sound_once},
+    audio::{Sound, load_sound_from_bytes, play_sound},
     prelude::*,
 };
 mod ball;
@@ -15,32 +15,32 @@ use player::*;
 use quad_snd::PlaySoundParams;
 use ui::*;
 
-pub fn draw_text(text: &str) {
-    draw_text_ex(
-        &text,
-        screen_width() / 3.,
-        screen_height() / 2.,
-        TextParams {
-            font_size: 30,
-            color: WHITE,
-            ..Default::default()
-        },
-    );
+// Window
+fn window_conf() -> Conf {
+    Conf {
+        window_title: "P0NG".to_owned(),
+        window_width: 1920,
+        window_height: 1080,
+        window_resizable: false,
+        ..Default::default()
+    }
 }
+
 pub enum GameState {
-    Menu,
+    Title,
     Playing,
+    Paused,
     GameWin,
     GameOver,
 }
 
 // Main Game loop
-#[macroquad::main("PONG")]
+#[macroquad::main(window_conf)]
 async fn main() {
     //audio
-    let hit_sound_bytes = include_bytes!("hit.wav");
-    let score_sound_bytes = include_bytes!("score.wav");
-    let background_sound_bytes = include_bytes!("background_music.wav");
+    let hit_sound_bytes = include_bytes!("Sounds/hit.wav");
+    let score_sound_bytes = include_bytes!("Sounds/score.wav");
+    let background_sound_bytes = include_bytes!("Sounds/background_music.wav");
 
     let hit_sound: Sound = load_sound_from_bytes(hit_sound_bytes).await.unwrap();
     let score_sound: Sound = load_sound_from_bytes(score_sound_bytes).await.unwrap();
@@ -53,77 +53,130 @@ async fn main() {
     let mut computer = Computer::new();
     let mut collision = Collision::new(hit_sound, score_sound);
     let mut ui = Info::new();
+
     //gamestate
-    let mut game_state = GameState::Menu;
+    let mut game_state = GameState::Title;
+
     //music
-    let mut music = false;
+    let mut music_playing = false;
 
     loop {
+        let dt = get_frame_time();
+
         match game_state {
-            GameState::Menu => {
-                // Menu logic
-                if !music {
+            GameState::Title => {
+                if !music_playing {
                     play_sound(
                         &background_sound,
                         PlaySoundParams {
                             volume: 0.5,
-                            looped: false,
+                            looped: true,
                         },
                     );
-                    music = true;
+                    music_playing = true;
                 }
-                draw_text("Press [ Space ] to start");
-                if is_key_down(KeyCode::Space) {
+
+                // Main menu
+                ui.draw_main_menu(dt);
+
+                if is_key_pressed(KeyCode::Space) {
                     game_state = GameState::Playing;
-                    music = false;
                 }
             }
+
             GameState::Playing => {
-                // Playing logic
                 clear_background(BLACK);
-                music = false;
-                // collision calls
-                collision.physics(&mut ball, &player.rect);
-                collision.physics(&mut ball, &computer.rect);
-                collision.score_update(&mut ball, &mut player, &mut computer);
 
-                // UI calls
-                ui.draw_score(&mut collision);
+                if is_key_pressed(KeyCode::Escape) {
+                    game_state = GameState::Paused;
+                }
 
-                //ball calls
-                ball.ball_movement(get_frame_time(), &mut collision.hit_sound);
-                ball.sprite();
+                // Update player
+                player.player_movement(dt);
+                player.update_pos();
 
-                // compter calls
-                computer.computer_movement(&mut ball, get_frame_time());
-                computer.sprite();
+                // Update computer
+                computer.computer_movement(&mut ball, dt);
                 computer.update_pos();
 
-                //player calls
-                player.update_pos();
+                // Ball
+                ball.ball_movement(dt, &mut collision.hit_sound);
+
+                // Collision
+                collision.physics(&mut ball, &player.rect, player.vel_y);
+                collision.physics(&mut ball, &computer.rect, computer.vel_y);
+
+                // Score update
+                collision.score_update(&mut ball, &mut player, &mut computer);
+
+                // Draw UI
+                ui.draw_score(&mut collision);
+
+                // Draw sprites
+                ball.sprite();
+                computer.sprite();
                 player.sprite();
-                player.player_movement(get_frame_time());
+
+                // Check win
                 if collision.player_score == 5 {
-                    collision.reset(&mut ball, &mut player, &mut computer);
                     game_state = GameState::GameWin;
                 } else if collision.comp_score == 5 {
-                    collision.reset(&mut ball, &mut player, &mut computer);
                     game_state = GameState::GameOver;
                 }
             }
-            GameState::GameWin => {
-                // Game Win logic
-                draw_text("You Win \n Press [ Space ] to restart.");
 
-                if is_key_down(KeyCode::Space) {
+            GameState::Paused => {
+                clear_background(BLACK);
+
+                ui.draw_score(&mut collision);
+                ball.sprite();
+                computer.sprite();
+                player.sprite();
+
+                // PAUSE MENU
+                ui.draw_pause_menu(dt, &collision);
+
+                // Resume game
+                if is_key_pressed(KeyCode::Space) {
                     game_state = GameState::Playing;
                 }
+
+                // Title screen
+                if is_key_pressed(KeyCode::Escape) {
+                    game_state = GameState::Title;
+                    collision.reset(&mut ball, &mut player, &mut computer);
+                }
             }
-            GameState::GameOver => {
-                // Game Over logic
-                draw_text("Game Over \n Press [ Space ] to restart.");
-                if is_key_down(KeyCode::Space) {
+
+            GameState::GameWin => {
+                ui.draw_game_over(true, dt);
+
+                // Restart game
+                if is_key_pressed(KeyCode::Space) {
+                    collision.reset(&mut ball, &mut player, &mut computer);
+                    ball.reset();
                     game_state = GameState::Playing;
+                }
+
+                // Return to title screen
+                if is_key_pressed(KeyCode::Escape) {
+                    game_state = GameState::Title;
+                }
+            }
+
+            GameState::GameOver => {
+                ui.draw_game_over(false, dt);
+
+                // Restart game
+                if is_key_pressed(KeyCode::Space) {
+                    collision.reset(&mut ball, &mut player, &mut computer);
+                    ball.reset();
+                    game_state = GameState::Playing;
+                }
+
+                // Return to menu
+                if is_key_pressed(KeyCode::Escape) {
+                    game_state = GameState::Title;
                 }
             }
         }
