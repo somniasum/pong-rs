@@ -70,9 +70,6 @@ impl Info {
         // Panel background
         draw_rectangle(panel_x, panel_y, panel_width, panel_height, BLACK);
 
-        // Panel border
-        draw_rectangle_lines(panel_x, panel_y, panel_width, panel_height, 3., WHITE);
-
         let title = "GAME PAUSED";
         let title_size = 48;
         let title_dims = measure_text(title, None, title_size, 1.0);
@@ -88,10 +85,7 @@ impl Info {
         );
 
         // Current score
-        let score_text = format!(
-            "CURRENT SCORE:  {}  -  {}",
-            collision.player_score, collision.comp_score
-        );
+        let score_text = format!("{}  -  {}", collision.player_score, collision.comp_score);
         let score_size = 28;
         let score_dims = measure_text(&score_text, None, score_size, 1.0);
         draw_text_ex(
@@ -107,8 +101,8 @@ impl Info {
 
         // Menu options
         let options = vec![
-            ("[ SPACE ]", "RESUME GAME", GRAY),
-            ("[ ESC ]", "TITLE SCREEN", BLACK),
+            ("[ SPACE ]", "RESUME GAME", WHITE),
+            ("[ ESC ]", "TITLE SCREEN", WHITE),
         ];
 
         let option_size = 22;
@@ -122,15 +116,9 @@ impl Info {
             let key_width = 100.;
             let key_x = screen_width() / 2. - 120.;
 
-            let key_color = if is_primary {
-                Color::from_rgba(0, 0, 0, 0)
-            } else {
-                Color::from_rgba(40, 40, 60, 255)
-            };
+            let key_color = if is_primary { BLACK } else { BLACK };
 
             draw_rectangle(key_x, y - 20., key_width, 35., key_color);
-
-            draw_rectangle_lines(key_x, y - 20., key_width, 35., 2., *color);
 
             let key_dims = measure_text(key, None, option_size, 1.0);
             draw_text_ex(

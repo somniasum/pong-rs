@@ -96,7 +96,7 @@ async fn main() {
                 player.update_pos();
 
                 // Update computer
-                computer.computer_movement(&mut ball, dt);
+                computer.computer_movement(&ball, dt);
                 computer.update_pos();
 
                 // Ball
