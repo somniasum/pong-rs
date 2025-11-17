@@ -1,4 +1,7 @@
-use macroquad::{prelude::*, audio::{play_sound_once, Sound}};
+use macroquad::{
+    audio::{Sound, play_sound_once},
+    prelude::*,
+};
 const BALL_SIZE: Vec2 = vec2(40., 40.);
 
 pub struct Ball {
@@ -28,12 +31,12 @@ impl Ball {
         if ball_top <= 0. && self.vel.y < 0. {
             self.vel.y *= -1.;
             self.rect.y = 0.; // snap inside
-            play_sound_once(&sound);
+            play_sound_once(sound);
         }
         if ball_bottom >= screen_height() && self.vel.y > 0. {
             self.vel.y *= -1.;
             self.rect.y = screen_height() - self.rect.h;
-            play_sound_once(&sound);
+            play_sound_once(sound);
         }
     }
 
