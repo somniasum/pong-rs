@@ -1,5 +1,5 @@
 use macroquad::{
-    audio::{Sound, load_sound_from_bytes, play_sound},
+    audio::{Sound, load_sound_from_bytes, play_sound, play_sound_once},
     prelude::*,
 };
 mod ball;
@@ -40,10 +40,12 @@ async fn main() {
     //audio
     let hit_sound_bytes = include_bytes!("Sounds/hit.wav");
     let score_sound_bytes = include_bytes!("Sounds/score.wav");
-    let background_sound_bytes = include_bytes!("Sounds/background_music.wav");
+    let press_sound_bytes = include_bytes!("Sounds/press.wav");
+    let background_sound_bytes = include_bytes!("Sounds/background_music2.wav");
 
     let hit_sound: Sound = load_sound_from_bytes(hit_sound_bytes).await.unwrap();
     let score_sound: Sound = load_sound_from_bytes(score_sound_bytes).await.unwrap();
+    let press_sound: Sound = load_sound_from_bytes(press_sound_bytes).await.unwrap();
     let background_sound: Sound = load_sound_from_bytes(background_sound_bytes).await.unwrap();
 
     // objects
@@ -81,6 +83,7 @@ async fn main() {
 
                 if is_key_pressed(KeyCode::Space) {
                     game_state = GameState::Playing;
+                    play_sound_once(&press_sound);
                 }
             }
 
@@ -89,6 +92,7 @@ async fn main() {
 
                 if is_key_pressed(KeyCode::Escape) {
                     game_state = GameState::Paused;
+                    play_sound_once(&press_sound);
                 }
 
                 // Update player
@@ -139,12 +143,14 @@ async fn main() {
                 // Resume game
                 if is_key_pressed(KeyCode::Space) {
                     game_state = GameState::Playing;
+                    play_sound_once(&press_sound);
                 }
 
                 // Title screen
                 if is_key_pressed(KeyCode::Escape) {
                     game_state = GameState::Title;
                     collision.reset(&mut ball, &mut player, &mut computer);
+                    play_sound_once(&press_sound);
                 }
             }
 
@@ -156,11 +162,13 @@ async fn main() {
                     collision.reset(&mut ball, &mut player, &mut computer);
                     ball.reset();
                     game_state = GameState::Playing;
+                    play_sound_once(&press_sound);
                 }
 
                 // Return to title screen
                 if is_key_pressed(KeyCode::Escape) {
                     game_state = GameState::Title;
+                    play_sound_once(&press_sound);
                 }
             }
 
@@ -172,11 +180,13 @@ async fn main() {
                     collision.reset(&mut ball, &mut player, &mut computer);
                     ball.reset();
                     game_state = GameState::Playing;
+                    play_sound_once(&press_sound);
                 }
 
                 // Return to menu
                 if is_key_pressed(KeyCode::Escape) {
                     game_state = GameState::Title;
+                    play_sound_once(&press_sound);
                 }
             }
         }
